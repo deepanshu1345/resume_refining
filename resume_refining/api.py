@@ -224,8 +224,9 @@ def process_resumes():
         if not allowed_file(resume_file['filename']):
             continue
 
-        resume_path = resume_file['filename']
+        resume_path = resume_file['file_path']
         # resume_file.save(resume_path)
+        print("resume path",resume_path)
 
         try:
             resume_parsed = parse_resume(resume_path)
@@ -244,15 +245,16 @@ def process_resumes():
                 'score': f"{percentage_score:.2f}%",
                 'experience_years': experience_years,
                 'resume_skills': resume_parsed.get('resume_skills', []),
+                # "file_url": SITE_URL + get_job_applicants.get("resume_attachment", []),
 
             })
             
         
-            # print("###################################")
-            # print("resume scores", resume_scores)
-            # print("###################################")
+            print("###################################")
+            print("resume scores", resume_scores)
+            print("###################################")
         except Exception as e:
-            print(f"Error processing resume {resume_file['filename']}: {e}")
+            print(f"Error processing resume {resume_file['file_path']}: {e}")
             continue
 
     experience_range = jd_parsed.get('experience', [])
@@ -282,13 +284,13 @@ def process_resumes():
         score = float(resume['score'].strip('%'))
         if score >= 80:
             # resume_data = save_perfect_match(resume, jd_job_title) # Get both URLs
-            resume['file_url'] = resume_data['file_url']
-            resume['view_url'] = resume_data['view_url']
+            # resume['file_url'] = resume_data['file_url']
+            # resume['view_url'] = resume_data['view_url']
             matched_resumes["PerfectMatched"].append(resume)
         elif 70 <= score < 80:
             # resume_data = save_perfect_match(resume, jd_job_title) # Get both URLs
-            resume['file_url'] = resume_data['file_url']
-            resume['view_url'] = resume_data['view_url']
+            # resume['file_url'] = resume_data['file_url']
+            # resume['view_url'] = resume_data['view_url']
             matched_resumes["TopMatched"].append(resume)
         elif 60 <= score < 70:
             #  resume_data = save_perfect_match(resume, jd_job_title)
@@ -301,7 +303,7 @@ def process_resumes():
 
     jd_required_skills = jd_parsed['jd_required_skills']
     resume_data = save_shortlisted_candidates(matched_resumes, jd_job_title, jd_required_skills)
-    print(resume_data)
+    print("resume data",resume_data)
     return {
         'Matched_Resumes': matched_resumes,
         'jd_required_skills': jd_required_skills
@@ -450,6 +452,7 @@ def extract_experience(text):
     extracted_experience = []
     for pattern in experience_patterns:
         matches = re.findall(pattern, text)
+        print("matches",matches)
         for match in matches:
             if match[0] and match[2]:
                 start = float(match[0])
@@ -492,7 +495,7 @@ def extract_text_from_pdf(file_path):
                     text += page.extract_text() + "\n"
     except Exception as e:
         return f"Error reading PDF: {str(e)}"
-
+    print("text :-",text)
     return text
 
 def extract_text_from_docx(file_path):
@@ -536,7 +539,9 @@ def parse_jd(jd_file=None, jd_text=None):
         return {'error': 'No input provided'}
 
     doc = nlp(text)
+    print("DOC",doc)
     experience = extract_experience(text)
+    print("Extracted Experience:", experience)
     # print("Extracted Experience:", experience)
 
     required_skills = re.search(r"(Skills :|Skills:|Requisite Skills:|Required Skills:|Must Have:)([\s\S]*?)(?=Preferred Skills|Education|Soft Skills|Roles and Responsibilities|$)", text, re.IGNORECASE)
@@ -560,6 +565,7 @@ def extract_experience_from_resume(text):
 
     for pattern in experience_patterns:
         matches = re.findall(pattern, text, flags=re.IGNORECASE)
+        print("matches",matches)
         for match in matches:
             years = match.strip('+')
             if years.isdigit() or years.replace('.', '', 1).isdigit():
@@ -575,10 +581,11 @@ def parse_resume(file_path):
     else:
         with open(file_path, 'r') as f:
             text = f.read()
-
+    print("text from resume ",text)
     total_experience = extract_experience_from_resume(text)
+    print("Extracted Resume Experience:", total_experience)
     resume_skills = extract_skills(text)
-    # print("Parsed Resume Skills:", resume_skills)
+    print("Parsed Resume Skills:", resume_skills)
 
     return {
         'raw_text': text,
@@ -616,6 +623,7 @@ def filter_resumes_by_experience(resume_scores, min_exp, max_exp, jd_required_sk
                 'experience_years': resume['experience_years'],
                 'matched_skills': list_matched_skills,
                 'matched_count': f'{matched_count} out of {total_jd_skills}',
+                # 'file_url': resume['file_url'],
             })
     return filtered_resumes
 
